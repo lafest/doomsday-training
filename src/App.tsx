@@ -7,9 +7,6 @@ export const App = () => {
     <BrowserRouter>
       <Switch>
         <Route exact path="/">
-          <Redirect to="/start" />
-        </Route>
-        <Route path="/start">
           <StartPage />
         </Route>
         <Route path="/play">
@@ -17,6 +14,9 @@ export const App = () => {
         </Route>
         <Route path="/gameover">
           <StartPage />
+        </Route>
+        <Route path="*">
+          <Redirect to="/" />
         </Route>
       </Switch>
     </BrowserRouter>
