@@ -5,6 +5,9 @@ import { routeNames } from "../constant";
 export const GameOverPage = () => {
   const history = useHistory();
 
+  const historyState = history.location.state as undefined | { score: number };
+  const score = historyState?.score ?? 0;
+
   const handleClickRetryButton = () => {
     history.push(routeNames.play);
   }
@@ -12,8 +15,6 @@ export const GameOverPage = () => {
   const handleClickGotoStartButton = () => {
     history.push(routeNames.start);
   }
-
-  const score = 3;
 
   return (
     <div>
