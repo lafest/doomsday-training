@@ -1,6 +1,6 @@
-import { Button, styled } from "@material-ui/core";
+import { Button } from "@material-ui/core";
 import { formatISO, getDay, parse } from "date-fns";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { useHistory } from "react-router-dom";
 import { routeNames } from "../constant";
 
@@ -34,6 +34,16 @@ export const GamePage = () => {
   const counterIntervalRef = useRef<NodeJS.Timer | null>(null);
   const countDownRef = useRef<NodeJS.Timer | null>(null);
 
+  const startCounterInterval = useCallback(() => {
+    if (counterIntervalRef.current !== null) {
+      return;
+    }
+
+    counterIntervalRef.current = setInterval(() => {
+      setCounter(c => c - 0.1 > 0 ? c - 0.1 : 0);
+    }, 100);
+  }, [])
+
   useEffect(() => {
     if (countDownRef.current === null) {
       countDownRef.current = setInterval(() => {
@@ -49,64 +59,49 @@ export const GamePage = () => {
       startCounterInterval();
     }
 
-  }, [countDown]);
+  }, [countDown, startCounterInterval]);
 
-  const stopCounterInterval = () => {
+  const stopCounterInterval = useCallback(() => {
     if (counterIntervalRef.current === null) {
       return;
     }
 
     clearInterval(counterIntervalRef.current);
     counterIntervalRef.current = null;
-  }
+  }, [])
 
-  const handleGameOver = () => {
+  const handleGameOver = useCallback(() => {
     stopCounterInterval();
     history.push(routeNames.gameOver, { score })
-  }
+  }, [history, score, stopCounterInterval])
 
   useEffect(() => {
     if (counter <= 0) {
       handleGameOver();
     }
-  }, [counter, history])
+  }, [counter, history, handleGameOver])
 
-
-  const startCounterInterval = () => {
-    if (counterIntervalRef.current !== null) {
-      return;
-    }
-
-    counterIntervalRef.current = setInterval(() => {
-      setCounter(c => c - 0.1 > 0 ? c - 0.1 : 0);
-    }, 100);
-  }
-
-  const handleSelectCorrectAnswer = () => {
+  const handleSelectCorrectAnswer = useCallback(() => {
     setScore((c) => c + 1);
     setCounter(10);
     setAnswer(generateRandomDate());
-  }
+  }, [])
 
-
-
-  const handleClickDateButton = (idx: number) => {
+  const handleClickDateButton = useCallback((idx: number) => {
     if (day === idx) {
       handleSelectCorrectAnswer();
       return;
     }
     handleGameOver();
-  }
+  }, [handleGameOver, day, handleSelectCorrectAnswer])
 
-
+  const targetDateDisplay = useMemo(() => answer !== null ? formatISO(answer, { representation: 'date' }) : 'ready...', [answer]);
 
   return (
-    <Wrapper>
-      <div>
-        {countDown}
-      </div>
-      <div>
-        {answer !== null ? formatISO(answer, { representation: 'date' }) : 'ready...'}
+    <>
+      <CountDown countDown={countDown} />
+      <div key='targetDateDisplay'>
+        {targetDateDisplay}
       </div>
       <div>
         점수 : {score}
@@ -116,14 +111,23 @@ export const GamePage = () => {
       </div>
       <div>
         {dateArr.map((date, idx) => (
-          <Button style={{ backgroundColor: idx === day ? 'red' : 'white'}} variant='contained' onClick={() => handleClickDateButton(idx)}>{date}</Button>        
+          <Button
+            key={idx}
+            style={{
+              backgroundColor: idx === day ? 'red' : 'white'
+            }}
+            variant='contained'
+            onClick={() => handleClickDateButton(idx)}>
+              {date}
+          </Button>        
         ))}
       </div>
-    </Wrapper>
+    </>
   );
 }
 
-const Wrapper = styled('div')({
-  display: 'flex',
-  flexDirection: 'column'
-})
+const CountDown = memo(({ countDown }: { countDown: number }) => (
+  <div key="countDown">
+    {countDown}
+  </div>
+))
